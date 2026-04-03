@@ -1,0 +1,45 @@
+import { DarkTheme, DefaultTheme, NavigationContainer } from '@react-navigation/native';
+import { useMemo } from 'react';
+import { ActivityIndicator, View, useColorScheme } from 'react-native';
+import { useAuth } from '@/hooks/useAuth';
+import { AuthNavigator } from '@/navigation/AuthNavigator';
+import { MainTabsNavigator } from '@/navigation/MainTabsNavigator';
+import { OnboardingNavigator } from '@/navigation/OnboardingNavigator';
+import { palette, theme } from '@/utils/theme';
+
+export function AppNavigator() {
+  const { status } = useAuth();
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
+
+  const navTheme = useMemo(
+    () => ({
+      ...(isDark ? DarkTheme : DefaultTheme),
+      colors: {
+        ...(isDark ? DarkTheme.colors : DefaultTheme.colors),
+        background: isDark ? palette.dark.background : palette.light.background,
+        card: isDark ? palette.dark.card : palette.light.card,
+        text: isDark ? palette.dark.text : palette.light.text,
+        border: isDark ? palette.dark.border : palette.light.border,
+        primary: theme.colors.brandOrange,
+      },
+    }),
+    [isDark],
+  );
+
+  return (
+    <NavigationContainer theme={navTheme}>
+      {status === 'bootstrapping' ? (
+        <View className="flex-1 items-center justify-center bg-white dark:bg-brandBlack">
+          <ActivityIndicator size="large" color={theme.colors.brandOrange} />
+        </View>
+      ) : status === 'logged_out' ? (
+        <AuthNavigator />
+      ) : status === 'phone_verified' ? (
+        <OnboardingNavigator />
+      ) : (
+        <MainTabsNavigator />
+      )}
+    </NavigationContainer>
+  );
+}
