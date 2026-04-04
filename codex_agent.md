@@ -44,12 +44,15 @@ src/
     slices/
       authSlice.ts
   types/                  # TypeScript types/interfaces/models
+    index.ts              # re-export all types from one place
     api.ts
     auth.ts
     navigation.ts
+    global.d.ts           # css and other ambient declarations
   utils/                  # pure helper functions
     validators.ts
     platform.ts
+    options.ts            # shared static option lists (dropdown/radio/chips)
 App.tsx                   # app providers + navigator
 ```
 
@@ -61,7 +64,7 @@ App.tsx                   # app providers + navigator
 - `contexts/`: Best for feature-level shared state that does not need global store overhead.
 - `store/`: Redux is reserved for app-wide, high-impact state like auth/session.
 - `hooks/`: Encapsulates reusable behavior and keeps components lean.
-- `types/`: Type-safe contracts prevent runtime bugs.
+- `types/`: Type-safe contracts prevent runtime bugs and keep every interface, enum, and shared shape in one controlled area.
 - `navigation/`: Single source of truth for route setup and types.
 - `utils/`: Pure functions improve portability and testability.
 
@@ -74,6 +77,12 @@ Use this split consistently:
 - `Redux`: top-level global state only (auth token presence, user session, app boot status).
 
 Rule: Redux owns canonical auth/session. Context owns feature UI flow state. Components own local screen state.
+
+## 3.1) Navigation Safety Rule (Required)
+
+- Never call `navigation.goBack()` without guarding it via `navigation.canGoBack()`.
+- If a screen can be an initial route, the back handler must handle root state safely (no-op or explicit fallback route).
+- For onboarding flows, always derive route decisions from latest server flags and refresh state after mutating onboarding data (for example, service selection).
 
 ## 4) Required Packages
 
@@ -619,6 +628,15 @@ When generating new code, follow these rules:
 7. Keep Android and iOS behavior aligned; use platform checks only when necessary.
 8. Any async action button must be disabled while loading to prevent duplicate requests.
 9. For OTP UX, use 4 separate input boxes with proper backspace/focus/paste behavior.
+10. Every new UI screen must be designed for both light mode and dark mode from day one, with readable contrast and consistent styling in both themes.
+11. Never hardcode user-facing copy inside components/screens; keep all display text in a centralized constants module (for example `src/utils/appText.ts`) and reference from there.
+12. Keep all shared TypeScript types, interfaces, enums, and ambient declarations inside `src/types/` and re-export them from `src/types/index.ts` so the app has one canonical type entry point.
+13. Keep toast UI theme-aware for both light and dark mode, and prefer backend-provided messages for API feedback instead of custom client-side success text.
+14. Use shared navigation primitives (for example a common `BackButton` component) instead of repeating per-screen back button markup, and ensure icon contrast is correct in both dark and light mode.
+15. Implement countdown/timer UX using absolute timestamps (`Date.now`) so timers remain accurate if the app is minimized/backgrounded and resumed.
+16. Keep static selection data (for example gender options, filter chips, dropdown items, tab metadata) in shared option modules like `src/utils/options.ts`; do not define these arrays inside screen components.
+17. Keep reusable helper logic (for example masking/formatting/parsing utilities like `maskPhoneNumber`) in `src/utils/index.ts` or focused files under `src/utils/`, and import them in screens/components instead of redefining functions locally.
+18. Use `/auth/me` onboarding flags as the source of truth for onboarding navigation. For worker flow, route by backend state: `isBasicInfoCompleted` -> identity step, `isServicesSelected` -> service selection step, `isDocumentsCompleted` -> documents/certificates step; never hardcode onboarding progression only on client-side assumptions.
 
 ## 9) Production Readiness Checklist
 
@@ -653,8 +671,10 @@ Use this default app flow:
 
 1. Login Flow:
    Phone number screen -> OTP verification screen.
-2. Worker Onboarding:
-   2-3 screens minimum (Welcome, Identity, Vehicle/Bank).
+2. Worker Onboarding (required 3-step flow):
+   Step 1: Create profile using verified phone token (`POST /customer/profile`, fallback `POST /worker/profile` if needed by backend contract).
+   Step 2: Fetch categories (`GET /categories`) and save selected worker services (`POST /worker/services`), then fetch certificate checklist (`GET /worker/status`).
+   Step 3: All set screen with CTA to enter main tabs and start getting jobs.
 3. Main App Tabs:
    Home, Ongoing, Earnings, Profile.
 4. Profile Subpages:

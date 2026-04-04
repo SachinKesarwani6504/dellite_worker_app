@@ -1,9 +1,0 @@
-env: load .env
-env: export EXPO_PUBLIC_API_BASE_URL
-Starting project at C:\Users\sachi\Desktop\dellite_worker_app
-Starting Metro Bundler
-warning: Bundler cache is empty, rebuilding (this may take a minute)
-Waiting on http://localhost:8111
-Logs for your project will appear below.
-› Detected a change in babel.config.js. Restart the server to see the new results. You may need to clear the bundler cache with the --clear flag for your changes to take effect.
-Terminate batch job (Y/N)? 

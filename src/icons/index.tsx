@@ -13,6 +13,7 @@ export const iconMap = {
   phone: 'call',
   otp: 'keypad',
   chevronRight: 'chevron-forward',
+  refresh: 'refresh',
 } as const satisfies Record<string, keyof typeof Ionicons.glyphMap>;
 
 export type AppIconName = keyof typeof iconMap;

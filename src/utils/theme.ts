@@ -1,6 +1,7 @@
 export const theme = {
   colors: {
     brandOrange: '#FF7A00',
+    brandRed: '#FF3D5A',
     brandYellow: '#FFC53D',
     brandCream: '#FFF7E8',
     brandText: '#2D1B00',
@@ -9,6 +10,10 @@ export const theme = {
     mutedText: '#6B5B46',
     border: '#F3D8A8',
     success: '#20A464',
+  },
+  gradients: {
+    brandDefault: ['#FF7A00', '#FF3D5A', '#FFC53D', '#0F0F10'] as const,
+    heroWarm: ['#FFD8A1', '#FFFFFF'] as const,
   },
 };
 

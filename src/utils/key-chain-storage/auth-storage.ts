@@ -23,19 +23,3 @@ export async function getAuthTokens(): Promise<AuthTokens | null> {
 export async function clearAuthTokens(): Promise<void> {
   await removeSecureValue(keyChainValues.authService, keyChainValues.authUsername);
 }
-
-export async function savePhoneToken(phoneToken: string): Promise<void> {
-  await saveSecureValue(
-    keyChainValues.phoneTokenService,
-    keyChainValues.phoneUsername,
-    phoneToken,
-  );
-}
-
-export async function getPhoneToken(): Promise<string | null> {
-  return getSecureValue(keyChainValues.phoneTokenService, keyChainValues.phoneUsername);
-}
-
-export async function clearPhoneToken(): Promise<void> {
-  await removeSecureValue(keyChainValues.phoneTokenService, keyChainValues.phoneUsername);
-}

@@ -70,7 +70,7 @@ export function OtpCodeInput({ value, onChange, length = 4, disabled = false }: 
   };
 
   return (
-    <View className="flex-row justify-between">
+    <View className="flex-row items-center justify-center">
       {digits.arr.map((digit, index) => (
         <TextInput
           key={index}
@@ -87,6 +87,7 @@ export function OtpCodeInput({ value, onChange, length = 4, disabled = false }: 
           onFocus={() => setActiveIndex(index)}
           onChangeText={text => updateFromIndex(index, text)}
           onKeyPress={({ nativeEvent }) => handleKeyPress(index, nativeEvent.key)}
+          style={{ marginRight: index === length - 1 ? 0 : 8 }}
           className={`h-14 w-14 rounded-xl border text-center text-xl font-semibold text-brandText dark:text-white ${
             activeIndex === index
               ? 'border-brandOrange bg-brandYellow/10 dark:bg-white/5'

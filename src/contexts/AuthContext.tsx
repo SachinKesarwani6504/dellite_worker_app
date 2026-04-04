@@ -1,73 +1,154 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import {
   clearAuthTokens,
-  clearPhoneToken,
-  createWorkerProfile,
+  createProfileWithPhoneToken,
   refreshAuth,
   getAuthTokens,
   getMe,
-  getPhoneToken,
   logoutCurrentSession,
   resendOtp,
   saveAuthTokens,
-  savePhoneToken,
   sendOtp,
   verifyOtp,
 } from '@/actions';
-import { APP_AUTH_ROLE, AuthUser, UserRole, WorkerProfilePayload } from '@/types/auth';
+import { AuthStatus } from '@/types/auth-status';
+import {
+  APP_AUTH_ROLE,
+  AuthMeResponse,
+  AuthUser,
+  UserRole,
+  WorkerOnboardingFlags,
+  WorkerProfilePayload,
+} from '@/types/auth';
+import { ApiError } from '@/types/api';
+import { OnboardingStackParamList } from '@/types/navigation';
 
-type AuthStatus = 'bootstrapping' | 'logged_out' | 'phone_verified' | 'authenticated';
+type OnboardingRouteName = keyof OnboardingStackParamList;
+type OnboardingPayload = AuthMeResponse['onboarding'];
 
 type AuthContextType = {
   user: AuthUser | null;
   status: AuthStatus;
   loading: boolean;
   phone: string;
+  onboardingRoute: OnboardingRouteName;
   isAuthenticated: boolean;
   sendOtpCode: (phone: string, role?: UserRole) => Promise<void>;
   verifyOtpCode: (phone: string, otp: string) => Promise<void>;
   resendOtpCode: (phone: string) => Promise<void>;
   completeOnboarding: (payload: WorkerProfilePayload) => Promise<void>;
+  completeOnboardingFlow: () => void;
   logout: () => Promise<void>;
-  refreshMe: () => Promise<void>;
+  refreshMe: () => Promise<AuthStatus>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+function extractWorkerOnboardingFlags(onboarding?: OnboardingPayload): WorkerOnboardingFlags | undefined {
+  if (!onboarding || typeof onboarding !== 'object') {
+    return undefined;
+  }
+
+  const toBoolean = (value: unknown): boolean | undefined => {
+    if (typeof value === 'boolean') return value;
+    if (typeof value === 'number') {
+      if (value === 1) return true;
+      if (value === 0) return false;
+      return undefined;
+    }
+    if (typeof value === 'string') {
+      const normalized = value.trim().toLowerCase();
+      if (normalized === 'true') return true;
+      if (normalized === 'false') return false;
+    }
+    return undefined;
+  };
+
+  const normalizeFlags = (raw: unknown): WorkerOnboardingFlags | undefined => {
+    if (!raw || typeof raw !== 'object') return undefined;
+    const source = raw as Record<string, unknown>;
+    return {
+      isBasicInfoCompleted: toBoolean(source.isBasicInfoCompleted),
+      isServicesSelected: toBoolean(source.isServicesSelected),
+      isDocumentsCompleted: toBoolean(source.isDocumentsCompleted),
+    };
+  };
+
+  if ('WORKER' in onboarding && onboarding.WORKER && typeof onboarding.WORKER === 'object') {
+    return normalizeFlags(onboarding.WORKER);
+  }
+
+  const hasFlatFlags =
+    'isBasicInfoCompleted' in onboarding ||
+    'isServicesSelected' in onboarding ||
+    'isDocumentsCompleted' in onboarding;
+
+  if (!hasFlatFlags) {
+    return undefined;
+  }
+
+  return normalizeFlags(onboarding);
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [status, setStatus] = useState<AuthStatus>('bootstrapping');
+  const [status, setStatus] = useState<AuthStatus>(AuthStatus.BOOTSTRAPPING);
   const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(false);
   const [phone, setPhone] = useState('');
+  const [onboardingRoute, setOnboardingRoute] = useState<OnboardingRouteName>('OnboardingIdentity');
+  const [phoneVerificationToken, setPhoneVerificationToken] = useState<string | null>(null);
+
+  const applyOnboardingFromWorkerFlags = useCallback((flags?: WorkerOnboardingFlags) => {
+    if (!flags) {
+      setOnboardingRoute('OnboardingWelcome');
+      return AuthStatus.AUTHENTICATED;
+    }
+
+    if (!flags?.isBasicInfoCompleted) {
+      setOnboardingRoute('OnboardingIdentity');
+      return AuthStatus.ONBOARDING;
+    }
+    if (!flags?.isServicesSelected) {
+      setOnboardingRoute('OnboardingVehicle');
+      return AuthStatus.ONBOARDING;
+    }
+    if (!flags?.isDocumentsCompleted) {
+      setOnboardingRoute('OnboardingCertification');
+      return AuthStatus.ONBOARDING;
+    }
+    setOnboardingRoute('OnboardingWelcome');
+    return AuthStatus.AUTHENTICATED;
+  }, []);
 
   const refreshMe = useCallback(async () => {
-    const me = await getMe();
-    setUser(me);
-  }, []);
+    const me = (await getMe()) as AuthMeResponse;
+    setUser(me.user);
+    return applyOnboardingFromWorkerFlags(extractWorkerOnboardingFlags(me.onboarding));
+  }, [applyOnboardingFromWorkerFlags]);
 
   const bootstrap = useCallback(async () => {
     try {
-      const [tokens, phoneToken] = await Promise.all([getAuthTokens(), getPhoneToken()]);
+      const tokens = await getAuthTokens();
       if (tokens?.accessToken) {
         try {
-          await refreshMe();
-          setStatus('authenticated');
+          const nextStatus = await refreshMe();
+          setStatus(nextStatus);
         } catch {
           if (!tokens.refreshToken) {
             throw new Error('Missing refresh token');
           }
           const refreshed = await refreshAuth(tokens.refreshToken);
           await saveAuthTokens(refreshed);
-          await refreshMe();
-          setStatus('authenticated');
+          const nextStatus = await refreshMe();
+          setStatus(nextStatus);
         }
-      } else if (phoneToken) {
-        setStatus('phone_verified');
       } else {
-        setStatus('logged_out');
+        setPhoneVerificationToken(null);
+        setStatus(AuthStatus.LOGGED_OUT);
       }
     } catch {
-      setStatus('logged_out');
+      setPhoneVerificationToken(null);
+      setStatus(AuthStatus.LOGGED_OUT);
     }
   }, [refreshMe]);
 
@@ -90,15 +171,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           accessToken: response.accessToken,
           refreshToken: response.refreshToken,
         });
-        await clearPhoneToken();
-        await refreshMe();
-        setStatus('authenticated');
+        setPhoneVerificationToken(null);
+        setStatus(AuthStatus.ONBOARDING);
+        try {
+          const nextStatus = await refreshMe();
+          setStatus(nextStatus);
+        } catch {
+          setStatus(AuthStatus.ONBOARDING);
+        }
         return;
       }
 
       if (response.phoneToken) {
-        await savePhoneToken(response.phoneToken);
-        setStatus('phone_verified');
+        setPhoneVerificationToken(response.phoneToken);
+        setOnboardingRoute('OnboardingIdentity');
+        setStatus(AuthStatus.PHONE_VERIFIED);
         return;
       }
 
@@ -113,16 +200,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const completeOnboarding = useCallback(
     async (payload: WorkerProfilePayload) => {
-      const phoneToken = await getPhoneToken();
+      const phoneToken = phoneVerificationToken;
       if (!phoneToken) {
+        setStatus(AuthStatus.LOGGED_OUT);
         throw new Error('Phone token missing. Please verify OTP again.');
       }
 
-      const response = (await createWorkerProfile(payload, phoneToken)) as {
+      let response: {
         accessToken?: string;
         refreshToken?: string;
         tokens?: { accessToken?: string; refreshToken?: string };
       };
+
+      try {
+        response = (await createProfileWithPhoneToken(payload, phoneToken)) as {
+          accessToken?: string;
+          refreshToken?: string;
+          tokens?: { accessToken?: string; refreshToken?: string };
+        };
+      } catch (error) {
+        if (error instanceof ApiError && (error.statusCode === 401 || error.statusCode === 403)) {
+          setPhoneVerificationToken(null);
+          setStatus(AuthStatus.LOGGED_OUT);
+        }
+        throw error;
+      }
+
       const accessToken = response.accessToken ?? response.tokens?.accessToken;
       const refreshToken = response.refreshToken ?? response.tokens?.refreshToken;
 
@@ -131,12 +234,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       await saveAuthTokens({ accessToken, refreshToken });
-      await clearPhoneToken();
-      await refreshMe();
-      setStatus('authenticated');
+      setPhoneVerificationToken(null);
+      setStatus(AuthStatus.ONBOARDING);
+      try {
+        const nextStatus = await refreshMe();
+        setStatus(nextStatus);
+      } catch {
+        setStatus(AuthStatus.ONBOARDING);
+      }
     },
-    [refreshMe],
+    [phoneVerificationToken, refreshMe],
   );
+
+  const completeOnboardingFlow = useCallback(() => {
+    setStatus(AuthStatus.AUTHENTICATED);
+  }, []);
 
   const logout = useCallback(async () => {
     setLoading(true);
@@ -148,10 +260,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch {
       // Even if API logout fails, we clear local session for safety.
     } finally {
-      await Promise.all([clearAuthTokens(), clearPhoneToken()]);
+      await clearAuthTokens();
+      setPhoneVerificationToken(null);
       setUser(null);
       setPhone('');
-      setStatus('logged_out');
+      setStatus(AuthStatus.LOGGED_OUT);
       setLoading(false);
     }
   }, []);
@@ -162,7 +275,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       status,
       loading,
       phone,
-      isAuthenticated: status === 'authenticated',
+      onboardingRoute,
+      isAuthenticated: status === AuthStatus.AUTHENTICATED,
       sendOtpCode: async (phoneNumber, role) => {
         setLoading(true);
         try {
@@ -195,6 +309,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setLoading(false);
         }
       },
+      completeOnboardingFlow,
       logout,
       refreshMe,
     }),
@@ -203,10 +318,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       status,
       loading,
       phone,
+      onboardingRoute,
       sendOtpCode,
       verifyOtpCode,
       resendOtpCode,
       completeOnboarding,
+      completeOnboardingFlow,
       logout,
       refreshMe,
     ],

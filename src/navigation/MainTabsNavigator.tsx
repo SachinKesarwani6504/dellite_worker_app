@@ -6,6 +6,7 @@ import { EarningsScreen } from '@/screens/tabs/EarningsScreen';
 import { HomeScreen } from '@/screens/tabs/HomeScreen';
 import { OngoingScreen } from '@/screens/tabs/OngoingScreen';
 import { MainTabParamList } from '@/types/navigation';
+import { APP_TEXT } from '@/utils/appText';
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
@@ -31,10 +32,14 @@ export function MainTabsNavigator() {
         },
       })}
     >
-      <Tab.Screen name="Home" component={HomeScreen} />
-      <Tab.Screen name="Ongoing" component={OngoingScreen} />
-      <Tab.Screen name="Earnings" component={EarningsScreen} />
-      <Tab.Screen name="Profile" component={ProfileNavigator} />
+      <Tab.Screen name="Home" component={HomeScreen} options={{ title: APP_TEXT.tabs.homeLabel }} />
+      <Tab.Screen name="Ongoing" component={OngoingScreen} options={{ title: APP_TEXT.tabs.ongoingLabel }} />
+      <Tab.Screen
+        name="Earnings"
+        component={EarningsScreen}
+        options={{ title: APP_TEXT.tabs.earningsLabel }}
+      />
+      <Tab.Screen name="Profile" component={ProfileNavigator} options={{ title: APP_TEXT.tabs.profileLabel }} />
     </Tab.Navigator>
   );
 }

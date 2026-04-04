@@ -4,13 +4,11 @@ export type AuthStackParamList = {
 };
 
 export type OnboardingStackParamList = {
-  OnboardingWelcome: undefined;
   OnboardingIdentity: undefined;
-  OnboardingVehicle: {
-    firstName: string;
-    lastName?: string;
-    email?: string;
-  };
+  OnboardingVehicle: undefined;
+  OnboardingServiceSelection: undefined;
+  OnboardingCertification: undefined;
+  OnboardingWelcome: undefined;
 };
 
 export type ProfileStackParamList = {

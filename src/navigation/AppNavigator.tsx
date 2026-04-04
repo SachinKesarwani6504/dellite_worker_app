@@ -5,6 +5,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { AuthNavigator } from '@/navigation/AuthNavigator';
 import { MainTabsNavigator } from '@/navigation/MainTabsNavigator';
 import { OnboardingNavigator } from '@/navigation/OnboardingNavigator';
+import { AuthStatus } from '@/types/auth-status';
 import { palette, theme } from '@/utils/theme';
 
 export function AppNavigator() {
@@ -29,13 +30,13 @@ export function AppNavigator() {
 
   return (
     <NavigationContainer theme={navTheme}>
-      {status === 'bootstrapping' ? (
+      {status === AuthStatus.BOOTSTRAPPING ? (
         <View className="flex-1 items-center justify-center bg-white dark:bg-brandBlack">
           <ActivityIndicator size="large" color={theme.colors.brandOrange} />
         </View>
-      ) : status === 'logged_out' ? (
+      ) : status === AuthStatus.LOGGED_OUT ? (
         <AuthNavigator />
-      ) : status === 'phone_verified' ? (
+      ) : status === AuthStatus.PHONE_VERIFIED || status === AuthStatus.ONBOARDING ? (
         <OnboardingNavigator />
       ) : (
         <MainTabsNavigator />
