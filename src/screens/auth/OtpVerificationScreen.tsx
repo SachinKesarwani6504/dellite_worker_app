@@ -5,7 +5,7 @@ import { BackButton } from '@/components/common/BackButton';
 import { Button } from '@/components/common/Button';
 import { GradientScreen } from '@/components/common/GradientScreen';
 import { OtpCodeInput } from '@/components/common/OtpCodeInput';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuthContext } from '@/contexts/AuthContext';
 import { AppIcon } from '@/icons';
 import { AuthStackParamList } from '@/types/navigation';
 import { AUTH_SCREENS } from '@/types/screen-names';
@@ -18,8 +18,11 @@ type Props = NativeStackScreenProps<AuthStackParamList, typeof AUTH_SCREENS.otpV
 
 export function OtpVerificationScreen({ route, navigation }: Props) {
   const isDark = useColorScheme() === 'dark';
+  const heroGradient = isDark
+    ? ([palette.dark.background, uiColors.surface.cardDefaultDark] as const)
+    : theme.gradients.hero;
   const { phoneNumber } = route.params;
-  const { verifyOtpCode, resendOtpCode, loading } = useAuth();
+  const { verifyOtpCode, resendOtpCode, loading } = useAuthContext();
   const [otp, setOtp] = useState('');
   const [resending, setResending] = useState(false);
   const resendDuration = 60;
@@ -73,7 +76,7 @@ export function OtpVerificationScreen({ route, navigation }: Props) {
   return (
     <GradientScreen
       useGradient
-      gradientColors={theme.gradients.hero}
+      gradientColors={heroGradient}
       gradientStart={{ x: 0, y: 0 }}
       gradientEnd={{ x: 0, y: 1 }}
       contentContainerStyle={{ flexGrow: 1, padding: 0, paddingBottom: 24 }}

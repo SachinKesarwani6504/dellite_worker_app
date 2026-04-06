@@ -40,6 +40,8 @@ export const APP_TEXT = {
       lastNameLabel: 'Last Name',
       lastNamePlaceholder: 'Last Name',
       genderLabel: 'Gender',
+      referralCodeLabel: 'Referral Code (Optional)',
+      referralCodePlaceholder: 'Enter referral code',
       nextButton: 'Next',
     },
     aadhaar: {
@@ -102,6 +104,7 @@ export const APP_TEXT = {
     nameFallback: 'Not set',
     editProfileButton: 'Edit Profile',
     payoutDetailsButton: 'Payout Details',
+    allSkillsButton: 'All Skills',
     helpSupportButton: 'Help & Support',
     logoutButton: 'Logout',
     edit: {
@@ -119,6 +122,10 @@ export const APP_TEXT = {
     helpSupport: {
       title: 'Help & Support',
       subtitle: 'Support chat, FAQs, and contact channels can be added here.',
+    },
+    allSkills: {
+      title: 'All Skills',
+      subtitle: 'View your registered services and approval status.',
     },
   },
 } as const;

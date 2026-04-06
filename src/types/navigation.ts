@@ -10,7 +10,6 @@ export type OnboardingStackParamList = {
   [ONBOARDING_SCREENS.aadhaar]: undefined;
   [ONBOARDING_SCREENS.serviceSelection]: undefined;
   [ONBOARDING_SCREENS.certification]: undefined;
-  [ONBOARDING_SCREENS.welcome]: undefined;
 };
 
 export type ProfileStackParamList = {
@@ -18,6 +17,7 @@ export type ProfileStackParamList = {
   [PROFILE_SCREENS.editProfile]: undefined;
   [PROFILE_SCREENS.payoutDetails]: undefined;
   [PROFILE_SCREENS.helpSupport]: undefined;
+  [PROFILE_SCREENS.allSkills]: undefined;
 };
 
 export type MainTabParamList = {

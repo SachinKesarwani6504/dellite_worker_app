@@ -13,6 +13,8 @@ export interface AuthUser {
   firstName?: string;
   lastName?: string;
   email?: string;
+  gender?: Gender;
+  createdAt?: string;
   [key: string]: unknown;
 }
 

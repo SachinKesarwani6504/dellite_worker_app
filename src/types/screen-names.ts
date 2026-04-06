@@ -8,7 +8,6 @@ export const ONBOARDING_SCREENS = {
   aadhaar: 'OnboardingAadhaar',
   serviceSelection: 'OnboardingServiceSelection',
   certification: 'OnboardingCertification',
-  welcome: 'OnboardingWelcome',
 } as const;
 
 export const PROFILE_SCREENS = {
@@ -16,6 +15,7 @@ export const PROFILE_SCREENS = {
   editProfile: 'EditProfile',
   payoutDetails: 'PayoutDetails',
   helpSupport: 'HelpSupport',
+  allSkills: 'AllSkills',
 } as const;
 
 export const MAIN_TAB_SCREENS = {
@@ -31,5 +31,6 @@ export const SCREEN_TITLES = {
     editProfile: 'Edit Profile',
     payoutDetails: 'Payout Details',
     helpSupport: 'Help & Support',
+    allSkills: 'All Skills',
   },
 } as const;

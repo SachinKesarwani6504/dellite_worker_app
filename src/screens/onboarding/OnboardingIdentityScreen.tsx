@@ -7,7 +7,7 @@ import { AppInput } from '@/components/common/AppInput';
 import { GradientScreen } from '@/components/common/GradientScreen';
 import { GradientWord } from '@/components/common/GradientWord';
 import { ProfilePhotoUploadPlaceholder } from '@/components/common/ProfilePhotoUploadPlaceholder';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuthContext } from '@/contexts/AuthContext';
 import { Gender } from '@/types/auth';
 import { OnboardingStackParamList } from '@/types/navigation';
 import { APP_TEXT } from '@/utils/appText';
@@ -28,7 +28,8 @@ export function OnboardingIdentityScreen({}: Props) {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [gender, setGender] = useState<Gender>('MALE');
-  const { completeOnboarding, loading } = useAuth();
+  const [referralCode, setReferralCode] = useState('');
+  const { completeOnboarding, loading } = useAuthContext();
 
   const isValid = isValidFirstName(firstName) && isValidLastName(lastName);
 
@@ -39,6 +40,7 @@ export function OnboardingIdentityScreen({}: Props) {
         firstName: normalizePersonName(firstName).trim(),
         lastName: normalizePersonName(lastName).trim(),
         gender,
+        referralCode: referralCode.trim() || undefined,
       });
     } catch {
       // Toasts are shown from API layer.
@@ -83,6 +85,13 @@ export function OnboardingIdentityScreen({}: Props) {
             value={lastName}
             onChangeText={value => setLastName(normalizePersonName(value))}
             placeholder={APP_TEXT.onboarding.identity.lastNamePlaceholder}
+          />
+          <AppInput
+            label={APP_TEXT.onboarding.identity.referralCodeLabel}
+            value={referralCode}
+            onChangeText={value => setReferralCode(value.replace(/\s+/g, '').toUpperCase())}
+            placeholder={APP_TEXT.onboarding.identity.referralCodePlaceholder}
+            autoCapitalize="characters"
           />
         </View>
 

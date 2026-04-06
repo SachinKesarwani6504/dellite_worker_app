@@ -21,3 +21,5 @@ export function titleCase(value: string): string {
     .toLowerCase()
     .replace(/\b\w/g, char => char.toUpperCase());
 }
+
+export * from '@/utils/date';

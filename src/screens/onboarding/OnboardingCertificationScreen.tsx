@@ -8,7 +8,7 @@ import { BackButton } from '@/components/common/BackButton';
 import { useBrandRefreshControlProps } from '@/components/common/BrandRefreshControl';
 import { Button } from '@/components/common/Button';
 import { GradientScreen } from '@/components/common/GradientScreen';
-import { useOnboarding } from '@/hooks/useOnboarding';
+import { useOnboarding, useOnboardingScreenGuard } from '@/hooks/useOnboarding';
 import { OnboardingStackParamList } from '@/types/navigation';
 import { WorkerCertificateCard } from '@/types/auth';
 import { SelectedCertificateFile } from '@/types/onboarding';
@@ -26,7 +26,6 @@ export function OnboardingCertificationScreen({ navigation }: Props) {
     fetchRequiredCertificates,
     submitCertificatesAndResolve,
     syncOnboardingRoute,
-    useScreenGuard,
   } = useOnboarding();
   const { modeKey, refreshProps } = useBrandRefreshControlProps();
   const [screenLoading, setScreenLoading] = useState(true);
@@ -98,7 +97,7 @@ export function OnboardingCertificationScreen({ navigation }: Props) {
     ]);
   }, [loadCertificates, screenLoading, syncOnboardingRoute]);
 
-  useScreenGuard({
+  useOnboardingScreenGuard({
     currentRoute: ONBOARDING_SCREENS.certification,
     onRedirect: route => navigation.replace(route),
   });
@@ -225,10 +224,6 @@ export function OnboardingCertificationScreen({ navigation }: Props) {
         { certificates: createPayload },
         { certificates: updatePayload },
       );
-      if (resolution.shouldShowWelcome || resolution.nextRoute === ONBOARDING_SCREENS.welcome) {
-        navigation.replace(ONBOARDING_SCREENS.welcome);
-        return;
-      }
 
       setHasSubmittedThisSession(true);
       setSelectedFileByCard({});

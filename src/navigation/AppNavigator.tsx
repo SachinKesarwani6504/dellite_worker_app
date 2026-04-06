@@ -1,7 +1,7 @@
 import { DarkTheme, DefaultTheme, NavigationContainer } from '@react-navigation/native';
 import { useMemo } from 'react';
 import { ActivityIndicator, View, useColorScheme } from 'react-native';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuthContext } from '@/contexts/AuthContext';
 import { AuthNavigator } from '@/navigation/AuthNavigator';
 import { MainTabsNavigator } from '@/navigation/MainTabsNavigator';
 import { OnboardingNavigator } from '@/navigation/OnboardingNavigator';
@@ -9,7 +9,7 @@ import { AuthStatus } from '@/types/auth-status';
 import { palette, theme } from '@/utils/theme';
 
 export function AppNavigator() {
-  const { status } = useAuth();
+  const { status } = useAuthContext();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
 

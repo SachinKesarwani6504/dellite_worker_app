@@ -1,7 +1,7 @@
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, RefreshControl, ScrollView, Text, View, useColorScheme } from 'react-native';
-import { useOnboarding } from '@/hooks/useOnboarding';
+import { useOnboarding, useOnboardingScreenGuard } from '@/hooks/useOnboarding';
 import { AppIcon } from '@/icons';
 import { BackButton } from '@/components/common/BackButton';
 import { useBrandRefreshControlProps } from '@/components/common/BrandRefreshControl';
@@ -36,7 +36,7 @@ function toIconBadgeText(name: string, iconText?: string): string {
 
 export function OnboardingServiceSelectionScreen({ navigation }: Props) {
   const isDark = useColorScheme() === 'dark';
-  const { fetchServiceCategories, saveWorkerServicesAndResolve, useScreenGuard } = useOnboarding();
+  const { fetchServiceCategories, saveWorkerServicesAndResolve } = useOnboarding();
   const { modeKey, refreshProps } = useBrandRefreshControlProps();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -89,7 +89,7 @@ export function OnboardingServiceSelectionScreen({ navigation }: Props) {
     void fetchCategories(false);
   }, [fetchCategories, loading, saving]);
 
-  useScreenGuard({
+  useOnboardingScreenGuard({
     currentRoute: ONBOARDING_SCREENS.serviceSelection,
     onRedirect: route => navigation.replace(route),
   });
@@ -126,10 +126,6 @@ export function OnboardingServiceSelectionScreen({ navigation }: Props) {
     try {
       setSaving(true);
       const resolution = await saveWorkerServicesAndResolve(ONBOARDING_CITY, selectedServiceNames);
-      if (resolution.shouldShowWelcome || resolution.nextRoute === ONBOARDING_SCREENS.welcome) {
-        navigation.replace(ONBOARDING_SCREENS.welcome);
-        return;
-      }
       navigation.replace(resolution.nextRoute);
     } finally {
       setSaving(false);

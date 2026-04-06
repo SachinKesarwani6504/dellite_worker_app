@@ -6,8 +6,8 @@ import { BackButton } from '@/components/common/BackButton';
 import { Button } from '@/components/common/Button';
 import { GradientScreen } from '@/components/common/GradientScreen';
 import { AadhaarQrScanner } from '@/components/common/AadhaarQrScanner';
-import { useAuth } from '@/hooks/useAuth';
-import { useOnboarding } from '@/hooks/useOnboarding';
+import { useAuthContext } from '@/contexts/AuthContext';
+import { useOnboardingScreenGuard } from '@/hooks/useOnboarding';
 import { useAadhaarQrVerification } from '@/hooks/useAadhaarQrVerification';
 import { OnboardingStackParamList } from '@/types/navigation';
 import { ONBOARDING_SCREENS } from '@/types/screen-names';
@@ -19,8 +19,7 @@ type Props = NativeStackScreenProps<OnboardingStackParamList, 'OnboardingAadhaar
 
 export function OnboardingAadhaarScreen({ navigation }: Props) {
   const isDark = useColorScheme() === 'dark';
-  const { loading } = useAuth();
-  const { useScreenGuard } = useOnboarding();
+  const { loading } = useAuthContext();
 
   const {
     phase,
@@ -32,7 +31,7 @@ export function OnboardingAadhaarScreen({ navigation }: Props) {
     resetScan,
   } = useAadhaarQrVerification();
 
-  useScreenGuard({
+  useOnboardingScreenGuard({
     currentRoute: ONBOARDING_SCREENS.aadhaar,
     onRedirect: route => navigation.replace(route),
     refreshOnMount: true,

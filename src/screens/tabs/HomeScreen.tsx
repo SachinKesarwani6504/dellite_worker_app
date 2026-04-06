@@ -1,12 +1,12 @@
 import { Text, View, useColorScheme } from 'react-native';
 import { GradientScreen } from '@/components/common/GradientScreen';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuthContext } from '@/contexts/AuthContext';
 import { APP_TEXT } from '@/utils/appText';
 import { palette } from '@/utils/theme';
 
 export function HomeScreen() {
   const isDark = useColorScheme() === 'dark';
-  const { user } = useAuth();
+  const { user } = useAuthContext();
   const displayName = [user?.firstName, user?.lastName].filter(Boolean).join(' ');
 
   return (
